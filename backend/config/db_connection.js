@@ -1,22 +1,12 @@
 import { Client } from 'pg';
 import 'dotenv/config';
 
-let connectionString;
-switch (process.env.NODE_ENV) {
-  case 'development':
-    connectionString = process.env.DEV_DB_URL;
-    break;
+const { NODE_ENV, DB_HOST, DB_USERNAME, DB_PASSWORD, DB_PORT, DB_NAME, TEST_DB_NAME } = process.env;
+const database = NODE_ENV == 'test' ? TEST_DB_NAME : DB_NAME;
 
-  case 'production':
-    connectionString = process.env.PROD_DB_URL;
-    break;
-
-  default:
-    connectionString = process.env.TEST_DB_URL;
-    break;
-}
-
+const connectionString = `postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${database}`;
 const client = new Client({ connectionString });
+
 client.connect()
-  .then(() => console.log('connected to database'))
+  .then(() => console.log(`connected to ${NODE_ENV} database`))
   .catch(err => console.log(`could not connect to the db: ${err.message}`));
