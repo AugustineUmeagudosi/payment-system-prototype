@@ -1,50 +1,39 @@
-import * as firebase from 'firebase/app';
-import dotenv from 'dotenv';
 import admin from 'firebase-admin';
 import serviceAccount from '../firebase-key.json';
-import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    sendEmailVerification, 
-    sendPasswordResetEmail
-} from 'firebase/auth';
 
-dotenv.config();
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+const db = admin.firestore();
+const firebaseAdmin = admin.auth();
 
+const createUser = async ({ email, password, displayName }) => {
+    const user = await admin.auth().createUser({ email, password, displayName });
+    const wallet = await db.collection('wallets').add({ balance: 0, currency: 'NGN', userId: user.uid });
+    return { user, wallet };
+};
 
-firebase.initializeApp({
-    apiKey: process.env.FIREBASE_API_KEY,
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.FIREBASE_APP_ID
-});
+const createTransactionQueue = async (data) => {
+    return db.collection('transactionQueues').add(data);
+};
+
+const createTransaction = async (data) => {
+    return db.collection('transactions').add(data);
+};
+
+const getUser = async(userId) => {
+    return firebaseAdmin.getUser(userId);
+}
+
+const deleteUsers = async () => {
+    const users = await firebaseAdmin.listUsers();
+    const deleteUsersResult = await firebaseAdmin.deleteUsers(users.users.map(user => user.uid));
+    return deleteUsersResult;
+};
 
 export {
-    getAuth,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut,
-    sendEmailVerification,
-    sendPasswordResetEmail,
-    admin
-};
-  
-
-export const createWallet = async ({ email, password, name: displayName }) => {
-    return admin.auth().createUser({ email, password, displayName });
-}
-
-export const createTransactionQueue = async ({ email, password, name: displayName }) => {
-    return admin.auth().createUser({ email, password, displayName });
-}
-
-export const createTransaction = async ({ email, password, name: displayName }) => {
-    return admin.auth().createUser({ email, password, displayName });
+    admin,
+    createUser,
+    getUser,
+    createTransactionQueue,
+    createTransaction,
+    deleteUsers,
 }

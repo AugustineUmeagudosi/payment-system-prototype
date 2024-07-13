@@ -4,12 +4,8 @@ import { ValidationMiddleware, Auth } from '../../middlewares';
 import * as Schema from './users.schema';
 
 const router = Router();
-const { validate } = ValidationMiddleware;
-const { verifyToken } = Auth;
 
-router.post('/register', validate(Schema.register), UserController.register);
-router.post('/login', validate(Schema.login), UserController.login);
-router.get('/profile', verifyToken, UserController.getProfile);
-// reset password
+router.post('/register', ValidationMiddleware.validate(Schema.register), UserController.register);
+router.get('/wallet', Auth.verifyToken, UserController.getWallet);
 
 export default router;

@@ -2,7 +2,6 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import './config/db_connection';
 import routes from './src/gateway';
 import { Response } from './src/utils';
 

@@ -1,6 +1,5 @@
 import { Response } from '../utils';
-import { admin } from '../../config/firebase';
-import UserServices from '../modules/Users/users.service';
+import { admin, getUser } from '../../config/firebase';
 
 export const verifyToken = async (req, res, next) => {
   try {
@@ -12,12 +11,15 @@ export const verifyToken = async (req, res, next) => {
     const token = authorization.split(' ')[1];
     const decoded = await admin.auth().verifyIdToken(token);
 
-    const user = await UserServices.getUser(decoded.uid);
-    if (!user) return Response.error(res, 'Invalid user', 401);
-
-    req.user = user;
+    // get user from firestore
+    req.user = await getUser(decoded.user_id);
     next();
   } catch (error) {
-    return Response.error(res, error.message);
+    const code = error.code === 'auth/id-token-expired' ? 401 : 500;
+    const message = error.code === 'auth/id-token-expired' 
+      ? 'invalid or expired token'
+      : error.message;
+
+    return Response.error(res, message, code);
   }
 };
