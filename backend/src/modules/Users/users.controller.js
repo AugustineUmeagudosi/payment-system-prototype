@@ -20,7 +20,8 @@ class UserController {
 
   static async getWallet(req, res) {
     try {
-      return Response.info(res, 'wallet fetched successfully!', 200, req.user);
+      const wallets = await FireBaseAdmin.getUserWallets(req.user.uid);
+      return Response.info(res, 'wallet fetched successfully!', 200, wallets);
     } catch (error) {
       console.log(`An error occured on the get user wallet endpoint: ${error.message}`);
       return Response.error(res, error.message);

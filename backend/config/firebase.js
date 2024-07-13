@@ -23,6 +23,15 @@ const getUser = async(userId) => {
     return firebaseAdmin.getUser(userId);
 }
 
+const getUserWallets = async(userId) => {
+    const walletsSnapshot = await db.collection('wallets').where('userId', '==', userId).get();
+    if (walletsSnapshot.empty) return [];
+
+    // Extract and return wallet data
+    const wallets = walletsSnapshot.docs.map(doc => doc.data());
+    return wallets;
+}
+
 const deleteUsers = async () => {
     const users = await firebaseAdmin.listUsers();
     const deleteUsersResult = await firebaseAdmin.deleteUsers(users.users.map(user => user.uid));
@@ -35,5 +44,6 @@ export {
     getUser,
     createTransactionQueue,
     createTransaction,
+    getUserWallets,
     deleteUsers,
 }
