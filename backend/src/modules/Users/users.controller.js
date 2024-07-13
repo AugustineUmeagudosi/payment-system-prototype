@@ -13,9 +13,14 @@ class UserController {
     try {
       const { email, password, name: displayName } = req.body;
 
-      const firebaseUser = await FireBaseAdmin.createUserWithEmailAndPassword(auth, email, password, displayName);
-      if (!firebaseUser) return Response.error(res, 'Could not create user', 400);
+      // const firebaseUser = await FireBaseAdmin.createUserWithEmailAndPassword(auth, email, password, displayName);
+      // if (!firebaseUser) return Response.error(res, 'Could not create user', 400);
 
+      const userRecord = await FireBaseAdmin.admin.auth().createUser({ email, password, displayName });
+      // Add custom fields to Firestore
+      await db.collection('users').doc(userRecord.uid).set({ balance: 0 });
+      return res.send(userRecord)
+      
       await FireBaseAdmin.sendEmailVerification(auth.currentUser);
       req.body.firebase_id = firebaseUser.user.uid;
       const user = await UserServices.createUser(req.body);
@@ -33,6 +38,10 @@ class UserController {
 
   static async login(req, res) {
     try {
+      // const users = await FireBaseAdmin.admin.auth().listUsers();
+      // const deleteUsersResult = await FireBaseAdmin.admin.auth().deleteUsers(users.users.map(user => user.uid));
+      // return res.send(deleteUsersResult);
+
       const { email, password } = req.body;
       const user = await FireBaseAdmin.signInWithEmailAndPassword(auth, email, password)
 

@@ -12,9 +12,8 @@ import {
 } from 'firebase/auth';
 
 dotenv.config();
-
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccount)
 });
 
 
@@ -37,3 +36,15 @@ export {
     admin
 };
   
+
+export const createWallet = async ({ email, password, name: displayName }) => {
+    return admin.auth().createUser({ email, password, displayName });
+}
+
+export const createTransactionQueue = async ({ email, password, name: displayName }) => {
+    return admin.auth().createUser({ email, password, displayName });
+}
+
+export const createTransaction = async ({ email, password, name: displayName }) => {
+    return admin.auth().createUser({ email, password, displayName });
+}
