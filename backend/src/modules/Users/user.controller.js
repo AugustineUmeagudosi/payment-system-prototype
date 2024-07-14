@@ -9,7 +9,7 @@ class UserController {
   static async register(req, res) {
     try {
       const { email, password, name } = req.body;
-
+      
       const user = await FireBaseAdmin.createUser({ email, password, displayName: name });
       return Response.info(res, 'User created successfully!', 200, user);
     } catch (error) {
