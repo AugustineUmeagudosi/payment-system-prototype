@@ -19,6 +19,20 @@ const createTransaction = async (data) => {
     return db.collection('transactions').add(data);
 };
 
+const getUserTransactions = async(userId) => {
+    const transactionSnapshot = await db.collection('transactions').where('userId', '==', userId).get();
+    if (transactionSnapshot.empty) return [];
+
+    // Extract and return wallet data
+    const transactions = transactionSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return transactions;
+}
+
+const getOneTransaction = async(transactionId) => {
+    const transactionSnaphot = await db.collection('transactions').doc(transactionId).get();
+    return transactionSnaphot.data();
+}
+
 const getUser = async(userId) => {
     return firebaseAdmin.getUser(userId);
 }
@@ -28,15 +42,24 @@ const getUserWallets = async(userId) => {
     if (walletsSnapshot.empty) return [];
 
     // Extract and return wallet data
-    const wallets = walletsSnapshot.docs.map(doc => doc.data());
+    const wallets = walletsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return wallets;
 }
 
-const deleteUsers = async () => {
-    const users = await firebaseAdmin.listUsers();
-    const deleteUsersResult = await firebaseAdmin.deleteUsers(users.users.map(user => user.uid));
-    return deleteUsersResult;
-};
+const getWalletByIds = async(walletIds) => {
+    const walletRefs = walletIds.map(id => db.collection('wallets').doc(id));
+        
+    const walletDocs = await db.getAll(...walletRefs);
+    const formattedWallets = {};
+    const wallets = [];
+    walletDocs.map(doc => {
+        if(doc.exists) {
+            formattedWallets[doc.id] = { id: doc.id, ...doc.data() };
+            wallets.push({ id: doc.id, ...doc.data() })
+        }
+    });
+    return { wallets, formattedWallets };
+}
 
 export {
     admin,
@@ -44,6 +67,8 @@ export {
     getUser,
     createTransactionQueue,
     createTransaction,
+    getUserTransactions,
     getUserWallets,
-    deleteUsers,
+    getOneTransaction,
+    getWalletByIds,
 }
