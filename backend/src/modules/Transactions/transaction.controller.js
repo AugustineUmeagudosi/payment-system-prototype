@@ -32,7 +32,8 @@ class TransactionController {
         receiverWalletId,
         receiverEmail,
         narration,
-        senderId: user.uid
+        senderId: user.uid,
+        status: 'queued'
       });
 
       return Response.info(res, 'Transaction has been queued', 200);
