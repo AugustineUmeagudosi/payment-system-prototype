@@ -15,8 +15,62 @@ const createTransactionQueue = async (data) => {
     return db.collection('transactionQueues').add(data);
 };
 
-const createTransaction = async (data) => {
-    return db.collection('transactions').add(data);
+const updateTransactionQueue = async (id, data) => {
+    return db.collection('transactionQueues').doc(id).update(data);
+};
+
+const getQueuedTransfers = async() => {
+    const transactionSnapshots = await db.collection('transactionQueues').where('status', '==', 'queued').get();
+    if (transactionSnapshots.empty) return [];
+
+    // Extract and return wallet data
+    const transactions = transactionSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return transactions;
+}
+
+const processTransfer = async (data) => {
+    const {
+        id: transactionQueueId,
+        amount,
+        senderWalletId,
+        receiverWalletId,
+        receiverEmail,
+        narration,
+        senderId,
+    } = data;
+
+    await db.runTransaction(async (t) => {
+        // Get sender wallet
+        const senderWalletRef = db.collection('wallets').doc(senderWalletId);
+        const senderWalletDoc = await t.get(senderWalletRef);
+        const senderWalletData = senderWalletDoc.data();
+
+        // Get recipient wallet
+        const recipientWalletRef = db.collection('wallets').doc(receiverWalletId);
+        const recipientWalletDoc = await t.get(recipientWalletRef);
+        const recipientWalletData = recipientWalletDoc.data();
+
+        // Debit sender wallet
+        t.update(senderWalletRef, { balance: senderWalletData.balance - amount });
+
+        // Credit recipient wallet
+        t.update(recipientWalletRef, { balance: recipientWalletData.balance + amount });
+
+        // Create transaction record
+        t.set(db.collection('transactions').doc(), {
+            senderWalletId,
+            amount,
+            receiverWalletId,
+            receiverEmail,
+            narration,
+            senderId,
+            receiverId: recipientWalletData.userId,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update transaction queue status to 'processed'
+        t.update(db.collection('transactionQueues').doc(transactionQueueId), { status: 'processed' });
+    });
 };
 
 const getUserTransactions = async(userId) => {
@@ -66,7 +120,9 @@ export {
     createUser,
     getUser,
     createTransactionQueue,
-    createTransaction,
+    updateTransactionQueue,
+    getQueuedTransfers,
+    processTransfer,
     getUserTransactions,
     getUserWallets,
     getOneTransaction,

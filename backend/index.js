@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import routes from './src/gateway';
 import { Response } from './src/utils';
+import './config/chimoneyCatalysts';
 
 dotenv.config();
 const app = express();
